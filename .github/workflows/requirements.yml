@@ -1,0 +1,68 @@
+name: Requirements Validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+    paths:
+      - 'reqs/**'
+      - 'tools/**'
+      - 'samples/**'
+      - 'requirements.txt'
+      - '.github/workflows/requirements.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Validate requirements (read-only)
+        run: python tools/validate.py
+
+      - name: ReqIF converter smoke test
+        run: |
+          mkdir /tmp/smoke && cd /tmp/smoke && git init -q
+          doorstop create SRD ./reqs/SRD
+          python "$GITHUB_WORKSPACE/tools/reqif_to_doorstop.py" "$GITHUB_WORKSPACE/samples/export.reqif" SRD
+          test "$(ls reqs/SRD/SRD*.yml | wc -l)" -eq 5
+
+      - name: Publish HTML report
+        run: doorstop publish all ./public
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: requirements-docs
+          path: public/
+
+      - uses: actions/upload-pages-artifact@v3
+        if: github.ref == 'refs/heads/main'
+        with:
+          path: public/
+
+  deploy:
+    needs: validate
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
