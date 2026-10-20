@@ -64,6 +64,7 @@ def convert(reqif_path: str, prefix: str, root: str = ".") -> list:
         for source_name, key in EXTRA_ATTRS.items():
             if source_name in values:
                 item.set(key, values[source_name])
+        item.set("status", "draft")  # ISO 26262 lifecycle: only a human advances it
         item.reviewed = False  # imported items are drafts; only a human reviews
         created[ref] = item
 

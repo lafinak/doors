@@ -1,11 +1,16 @@
 active: true
+asil: B
 derived: false
 header: |
   User Authentication
 level: 1.0
 links: []
 normative: true
+rationale: |
+  Unauthenticated access to protected resources is a safety-relevant hazard.
 ref: ''
 reviewed: null
+status: draft
 text: |
   The system shall authenticate users before granting access to any protected resource.
+verification_method: test

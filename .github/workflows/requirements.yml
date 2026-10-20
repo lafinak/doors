@@ -33,6 +33,9 @@ jobs:
       - name: Validate requirements (read-only)
         run: python tools/validate.py
 
+      - name: ISO 26262 schema validation
+        run: python tools/validate_iso26262.py
+
       - name: ReqIF converter smoke test
         run: |
           mkdir /tmp/smoke && cd /tmp/smoke && git init -q

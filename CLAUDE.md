@@ -14,3 +14,14 @@ NEVER approve a requirement yourself. Always wait for human review.
 - Publish HTML: `doorstop publish all ./public`
 - Convert ReqIF: `python tools/reqif_to_doorstop.py samples/export.reqif SRD`
 - Never run `doorstop review`; that is a human decision
+
+## ISO 26262 rules
+
+Every SRD requirement MUST contain:
+- `asil`: QM / A / B / C / D
+- `status`: starts as `draft`; only a human changes it to `reviewed` / `approved`
+- `verification_method`: test / analysis / inspection / demonstration
+- `rationale`: why the requirement exists
+
+NEVER set `status: approved`. NEVER change an ASIL without an explicit instruction from an engineer.
+Check with `python tools/validate_iso26262.py`.
