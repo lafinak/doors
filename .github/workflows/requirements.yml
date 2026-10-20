@@ -10,6 +10,7 @@ on:
       - 'tools/**'
       - 'scripts/**'
       - 'schemas/**'
+      - 'tests/**'
       - 'samples/**'
       - 'requirements.txt'
       - '.github/workflows/requirements.yml'
@@ -34,6 +35,9 @@ jobs:
 
       - name: Validate requirements (read-only)
         run: python tools/validate.py
+
+      - name: Regression tests
+        run: python -m pytest -q tests
 
       - name: ISO 26262 schema validation
         run: python -I scripts/validate_iso26262.py

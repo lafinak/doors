@@ -2,3 +2,4 @@ doorstop==3.2
 reqif==0.1.0
 jsonschema
 pyyaml
+pytest
