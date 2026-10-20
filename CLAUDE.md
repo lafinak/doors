@@ -10,5 +10,7 @@ You are a requirements-engineering assistant. For every new requirement:
 NEVER approve a requirement yourself. Always wait for human review.
 
 ## Commands
-- Validate: `doorstop` (no subcommand; there is no `doorstop validate` in v3.2)
+- Validate: `python tools/validate.py` (read-only). Do NOT run bare `doorstop`: in v3.2 it auto-marks never-reviewed items as reviewed and rewrites files. There is no `doorstop validate` subcommand.
 - Publish HTML: `doorstop publish all ./public`
+- Convert ReqIF: `python tools/reqif_to_doorstop.py samples/export.reqif SRD`
+- Never run `doorstop review`; that is a human decision
