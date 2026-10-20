@@ -9,14 +9,14 @@ Migration path from IBM DOORS to Git-native requirements management with [Doorst
 | 1 | Doorstop demo: SRD → SWR → TST with traceability | `reqs/`, `CLAUDE.md` |
 | 2 | ReqIF (DOORS export) → Doorstop converter and a synthetic export | `tools/reqif_to_doorstop.py`, `tools/make_dummy_reqif.py`, `samples/export.reqif` |
 | 3 | CI: validate on every PR, publish HTML report to GitHub Pages | `.github/workflows/requirements.yml` |
-| 4 | ISO 26262 schema, validator, TCL1 dossier (draft) | `schemas/`, `tools/validate_iso26262.py`, `docs/tool_qualification/` |
+| 4 | ISO 26262 schema, validator, TCL1 dossier (draft) | `schemas/`, `scripts/validate_iso26262.py`, `docs/tool_qualification/` |
 
 ## Quick start
 
 ```bash
 pip install -r requirements.txt
 python tools/validate.py                  # structural validation (read-only)
-python tools/validate_iso26262.py         # ISO 26262 schema check
+python scripts/validate_iso26262.py         # ISO 26262 schema check
 doorstop publish all ./public             # HTML report with traceability matrix
 python tools/make_dummy_reqif.py          # regenerate the synthetic DOORS export
 python tools/reqif_to_doorstop.py samples/export.reqif SRD   # import into an SRD document

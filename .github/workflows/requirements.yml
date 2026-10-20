@@ -8,6 +8,8 @@ on:
     paths:
       - 'reqs/**'
       - 'tools/**'
+      - 'scripts/**'
+      - 'schemas/**'
       - 'samples/**'
       - 'requirements.txt'
       - '.github/workflows/requirements.yml'
@@ -34,7 +36,7 @@ jobs:
         run: python tools/validate.py
 
       - name: ISO 26262 schema validation
-        run: python tools/validate_iso26262.py
+        run: python -I scripts/validate_iso26262.py
 
       - name: ReqIF converter smoke test
         run: |

@@ -72,7 +72,7 @@ HTML report v `./public` s kompletnou traceability matricou. Otvoriteľný v pre
 
 ## Level 2 — ReqIF Pipeline
 
-**Čas:** 1 deň | **Cieľ:** Realistìký import z DOORS cez ReqIF
+**Čas:** 1 deň | **Cieľ:** Realistický import z DOORS cez ReqIF
 
 ### Instalácia
 
@@ -153,7 +153,7 @@ doorstop publish all ./public
 
 **Čas:** 2–4 hodiny | **Cieľ:** Automatická validácia na každý PR
 
-### Sruktúra súborov
+### Štruktúra súborov
 
 ```
 .github/
@@ -236,7 +236,7 @@ jobs:
           publish_dir: ./public
 ```
 
-### Aktivová GitHub Pages
+### Aktivuj GitHub Pages
 
 ```bash
 # 1. V GitHub repo ideš do Settings → Pages
@@ -275,7 +275,7 @@ python -m http.server 8000 -d ./public
 
 ## Level 4 — Rivet + ISO 26262 + TCL1 Dossier
 
-**Čas:** 1–2 dni | **Cieľ:** Argument pre auditátora že Claude Code nepotrebuje formálnu kvalifikáciu
+**Čas:** 1–2 dni | **Cieľ:** Argument pre auditora že Claude Code nepotrebuje formálnu kvalifikáciu
 
 > ⚠️ **Rivet je research-stage** (2 stars, 0 forks k októbru 2026). Level 4 ti dáva ISO schemy a TCL1 argumentáciu, ktorú môžeš prezentovať auditorovi bez ohľadu na to či Rivet použiješ alebo nie.
 
@@ -403,7 +403,7 @@ NIKDY nenastavuj `status: approved` — to je výlučne rozhodnutie človeka.
 NIKDY nemeň ASIL bez explicitného pokynú od inžyniera.
 ```
 
-### 4.4 TCL1 Dossier (pre auditátora)
+### 4.4 TCL1 Dossier (pre auditora)
 
 Ulož ako `docs/tool_qualification/tcl1_argument.md`:
 

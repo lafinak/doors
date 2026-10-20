@@ -27,16 +27,16 @@ confidence that a tool malfunction or erroneous output will be prevented or dete
 | Engineer reviews every drafted item before it is merged | PR review, `CLAUDE.md` rule | Yes (human) |
 | Visible diff of every change | Git / pull request | Yes |
 | Structural checks (links, levels, suspect links) | `tools/validate.py` in CI | Yes (deterministic) |
-| Schema checks (ASIL, status, verification method, rationale, "shall" form) | `tools/validate_iso26262.py` in CI | Yes (deterministic) |
+| Schema checks (ASIL, status, verification method, rationale, "shall" form) | `scripts/validate_iso26262.py` in CI | Yes (deterministic) |
 | Two approvals required to merge to `main` | Branch protection (**must be enabled; not set by this repo**) | Yes |
 
-**Proposed TD: TD1**, resting mainly on the human review. An assessor must decide whether
+**Proposed TD: TD1** (written "TED1" in some project notes; the standard's term is TD), resting mainly on the human review: an engineer reviews every diff before it is merged. An assessor must decide whether
 this is sufficient for the ASILs in scope, particularly ASIL C/D.
 
 ## 3. Resulting TCL
 
 TI2 + TD1 gives **TCL1** (per the TCL determination table in clause 11). At TCL1 the
-standard asks for no further tool qualification measures. If the assessor rates TD as
+standard asks for no further tool qualification measures, so no formal qualification of Claude Code is proposed. If the assessor rates TD as
 TD2, the result is TCL2 and a qualification method (e.g. increased confidence from use,
 or validation of the tool) would be needed.
 
@@ -44,7 +44,7 @@ or validation of the tool) would be needed.
 
 1. `CLAUDE.md` tells the tool to create items only with `status: draft`.
 2. Plain `doorstop` auto-reviews new items; this repo uses `tools/validate.py`, which disables that.
-3. `tools/validate_iso26262.py` fails any item with `reviewed`/`approved` status that has no Doorstop review stamp.
+3. `scripts/validate_iso26262.py` fails any item with `reviewed`/`approved` status that has no Doorstop review stamp.
 4. Only a human runs `doorstop review` and changes `status`.
 5. Git history gives an audit trail of every change and its author.
 

@@ -24,4 +24,4 @@ Every SRD requirement MUST contain:
 - `rationale`: why the requirement exists
 
 NEVER set `status: approved`. NEVER change an ASIL without an explicit instruction from an engineer.
-Check with `python tools/validate_iso26262.py`.
+Check with `python scripts/validate_iso26262.py`.
