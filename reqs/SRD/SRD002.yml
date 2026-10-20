@@ -1,0 +1,15 @@
+active: true
+asil: B
+derived: false
+header: |
+  Account Lockout
+level: 1.1
+links: []
+normative: true
+rationale: Limits brute-force attempts against the authentication function.
+ref: ''
+reviewed: null
+status: draft
+text: |
+  The system shall lock an account after five consecutive failed authentication attempts.
+verification_method: test

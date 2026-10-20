@@ -1,0 +1,13 @@
+active: true
+derived: false
+header: |
+  Failed Attempt Counter
+level: 1.1
+links:
+- SRD002: Sviu1sGgYaBvWBPka4PeWyXw23Slob3SQ8QR1fA_dMc=
+- SRD003: YNjDzOukdUVt1NS67FW91b-KzAUKJ7-QMraf3O_SWUc=
+normative: true
+ref: ''
+reviewed: null
+text: |
+  The system shall maintain a failed-attempt counter per account and reset it on successful login.
