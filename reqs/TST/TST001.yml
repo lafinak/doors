@@ -1,13 +1,9 @@
 active: true
 derived: false
-header: |
-  Login Rejection and Lockout Test
+header: ''
 level: 1.0
-links:
-- SWR001: dQ92REKXMC76NpyHwgE6uU8Pce_MGu40gRhkpRwhmNU=
-- SWR002: 5IR9ymaopuPTjtfKOgwqvfL7XT_aQyU9SsV0Pup1g2o=
+links: []
 normative: true
 ref: ''
-reviewed: 9CVRqq0gC5CcMXqwbgVDK6FLomt6Xajye9-uDZ5oK3k=
-text: |
-  Verify that a login with invalid credentials is rejected and that the sixth attempt after five failures is blocked.
+reviewed: wN3dkDXC2R9OhY-14BL6sKaE4kNoW9nRyNvPwbupTUs=
+text: ''

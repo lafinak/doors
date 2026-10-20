@@ -1,11 +1,9 @@
 active: true
 derived: false
-header: |
-  User Authentication
+header: ''
 level: 1.0
 links: []
 normative: true
 ref: ''
-reviewed: pJuB1pB6stZ5tCuzioYsisHkwWyCHLBphPYJ1-ayzVw=
-text: |
-  The system shall authenticate users before granting access to any protected resource.
+reviewed: JJzLKK1G8cUo7iDAkKWYLnCPMDIw8BuhtiMgHgYMXcY=
+text: ''

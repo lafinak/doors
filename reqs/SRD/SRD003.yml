@@ -1,11 +1,9 @@
 active: true
 derived: false
-header: |
-  Authentication Logging
-level: 1.2
+header: ''
+level: 1.0
 links: []
 normative: true
 ref: ''
-reviewed: YNjDzOukdUVt1NS67FW91b-KzAUKJ7-QMraf3O_SWUc=
-text: |
-  The system shall log every authentication attempt with timestamp and outcome.
+reviewed: oUu-8YyT9rLSVlseYI7GfJWzW6wY4mxJeIsv3-HtHKA=
+text: ''

@@ -1,11 +1,9 @@
 active: true
 derived: false
-header: |
-  Account Lockout
-level: 1.1
+header: ''
+level: 1.0
 links: []
 normative: true
 ref: ''
-reviewed: Sviu1sGgYaBvWBPka4PeWyXw23Slob3SQ8QR1fA_dMc=
-text: |
-  The system shall lock an account after five consecutive failed authentication attempts.
+reviewed: gdi_cSHiwVgg-epyNagnppOzhKhq9BhxdSAMWNlhsDs=
+text: ''

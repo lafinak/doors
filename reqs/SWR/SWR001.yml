@@ -1,12 +1,9 @@
 active: true
 derived: false
-header: |
-  Credential Verification
+header: ''
 level: 1.0
-links:
-- SRD001: pJuB1pB6stZ5tCuzioYsisHkwWyCHLBphPYJ1-ayzVw=
+links: []
 normative: true
 ref: ''
-reviewed: VuwJPTuri4lenccMHpyPx2kMo5YAvr-gTqmehLvoelc=
-text: |
-  The system shall verify user credentials against the credential store using a salted hash.
+reviewed: 1vUY36xls0VL7MvHgkrpzagngI0hBuW3ZGSWAcFL3do=
+text: ''
