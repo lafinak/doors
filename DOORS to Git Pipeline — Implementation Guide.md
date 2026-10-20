@@ -4,6 +4,8 @@ Oct 20, 2026 · @sepric eye
 
 Komplexný implementačný plán pre migráciu z IBM DOORS na Git-natívny requirements management stack s Claude Code.
 
+> ⚠️ **Opravy po implementácii (20. 10. 2026):** pri skutočnom spustení sa ukázalo, že niektoré príkazy v tomto návode nefungujú. `doorstop validate` v Doorstop 3.2 neexistuje; validácia sa spúšťa príkazom `doorstop` bez podpríkazu, ten však automaticky označí nové položky ako reviewed a prepíše súbory, preto použi `python tools/validate.py`. `reqif.ReqIFBundle.from_file` neexistuje (knižnica používa `reqif.parser.ReqIFParser`). Položky Doorstopu nemajú pole `uid` (UID je názov súboru). Pre GitHub Pages sa používa `actions/deploy-pages`. Správny pojem v ISO 26262 je TD (tool error detection), nie „TED“. Funkčná verzia je v tomto repozitári; zoznam rozdielov je v `README.md`.
+
 ## Level 1 — Základné demo
 
 **Čas:** 2–3 hodiny | **Cieľ:** Ukázať že stack funguje end-to-end

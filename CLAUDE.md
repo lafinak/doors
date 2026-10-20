@@ -13,7 +13,9 @@ NEVER approve a requirement yourself. Always wait for human review.
 - Validate: `python tools/validate.py` (read-only). Do NOT run bare `doorstop`: in v3.2 it auto-marks never-reviewed items as reviewed and rewrites files. There is no `doorstop validate` subcommand.
 - Publish HTML: `doorstop publish all ./public`
 - Convert ReqIF: `python tools/reqif_to_doorstop.py samples/export.reqif SRD`
+- Test: `python -m pytest -q tests`
 - Never run `doorstop review`; that is a human decision
+- Never edit `doors_id` on an imported item; it ties the item back to DOORS and stops re-imports duplicating it
 
 ## ISO 26262 rules
 
@@ -24,4 +26,4 @@ Every SRD requirement MUST contain:
 - `rationale`: why the requirement exists
 
 NEVER set `status: approved`. NEVER change an ASIL without an explicit instruction from an engineer.
-Check with `python scripts/validate_iso26262.py`.
+Check with `python scripts/validate_iso26262.py` (covers SRD, SWR and TST; SWR must link to an SRD, TST to a SWR).

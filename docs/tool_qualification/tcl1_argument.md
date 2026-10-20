@@ -26,9 +26,13 @@ confidence that a tool malfunction or erroneous output will be prevented or dete
 |---|---|---|
 | Engineer reviews every drafted item before it is merged | PR review, `CLAUDE.md` rule | Yes (human) |
 | Visible diff of every change | Git / pull request | Yes |
-| Structural checks (links, levels, suspect links) | `tools/validate.py` in CI | Yes (deterministic) |
-| Schema checks (ASIL, status, verification method, rationale, "shall" form) | `scripts/validate_iso26262.py` in CI | Yes (deterministic) |
-| Two approvals required to merge to `main` | Branch protection (**must be enabled; not set by this repo**) | Yes |
+| Structural checks (links, levels, suspect links, link cycles, self-links) | `tools/validate.py` in CI | Yes (deterministic) |
+| Schema checks for SRD, SWR and TST (ASIL, status, verification method, rationale, "shall" form) | `scripts/validate_iso26262.py` in CI | Yes (deterministic) |
+| Traceability rules: every SWR links to an SRD, every TST to a SWR | `scripts/validate_iso26262.py` in CI | Yes (deterministic) |
+| `reviewed`/`approved` status only with a review stamp that matches the item's current content | `scripts/validate_iso26262.py` (forged or stale stamps rejected) | Yes (deterministic) |
+| Regression tests for the tooling itself (about 35 cases, incl. hostile input) | `tests/` in CI | Yes (deterministic) |
+| Code-owner review for `reqs/`, `schemas/`, `scripts/`, `tools/`, `.github/` | `.github/CODEOWNERS` (**takes effect only when branch protection requires code-owner review; not set by this repo**) | Yes (human) |
+| Required approvals to merge to `main` | Branch protection (**must be enabled; not set by this repo**) | Yes |
 
 **Proposed TD: TD1** (written "TED1" in some project notes; the standard's term is TD), resting mainly on the human review: an engineer reviews every diff before it is merged. An assessor must decide whether
 this is sufficient for the ASILs in scope, particularly ASIL C/D.
@@ -44,13 +48,16 @@ or validation of the tool) would be needed.
 
 1. `CLAUDE.md` tells the tool to create items only with `status: draft`.
 2. Plain `doorstop` auto-reviews new items; this repo uses `tools/validate.py`, which disables that.
-3. `scripts/validate_iso26262.py` fails any item with `reviewed`/`approved` status that has no Doorstop review stamp.
+3. `scripts/validate_iso26262.py` fails any item with `reviewed`/`approved` status unless Doorstop confirms the review stamp matches the item's current content. A hand-written stamp, or a stamp left stale by a later edit, is rejected.
 4. Only a human runs `doorstop review` and changes `status`.
 5. Git history gives an audit trail of every change and its author.
+6. The converter records each item's DOORS identifier (`doors_id`), never overwrites an item already imported, and reports links it cannot carry over.
 
-Limits: items 1, 4 are instructions and team discipline, not technical locks. Item 3 only
-checks that a stamp exists, not who made it. Branch protection and required reviewers must
-be configured on the hosting platform.
+Limits, stated plainly:
+- Items 1 and 4 are instructions and team discipline, not technical locks.
+- A valid stamp proves the content was not changed after someone ran `doorstop review`. It does **not** prove that person was a human engineer: anyone with write access can run that command. Only branch protection with required (code-owner) reviewers establishes that, and it must be configured on the hosting platform.
+- A sole maintainer cannot approve their own pull request, so a "2 approvals" rule needs a second reviewer or an administrator bypass; decide this before relying on the argument.
+- Rich text in DOORS (images, nested tables) is flattened on import; images leave a visible `[image: ...]` marker. Check imported items against DOORS before review.
 
 ## 5. Evidence still to collect
 

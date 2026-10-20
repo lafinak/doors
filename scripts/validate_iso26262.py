@@ -1,8 +1,11 @@
-"""Validate SRD item files against schemas/srd_requirement.json.
+"""Validate Doorstop item files against the JSON schemas in schemas/.
 
-Usage: python scripts/validate_iso26262.py [reqs/SRD] [schemas/srd_requirement.json]
+Usage:
+  python scripts/validate_iso26262.py                       # SRD, SWR and TST
+  python scripts/validate_iso26262.py reqs/SRD schemas/srd_requirement.json   # one directory
 
 Fails (exit 1) on schema errors, unreadable files, a missing or empty directory,
+a SWR without a link to an SRD or a TST without a link to a SWR (CLAUDE.md rules),
 and on `status: reviewed|approved` unless Doorstop confirms the item's review
 stamp matches its current content (a forged or stale stamp is rejected).
 """
@@ -24,6 +27,17 @@ def reviewed_by_doorstop(req_dir: Path) -> set:
     except Exception as e:  # fail closed: if stamps cannot be verified, none count
         print(f"WARN: cannot verify review stamps ({type(e).__name__}: {e})")
         return set()
+
+
+# document prefix -> prefix its links must point to
+REQUIRED_PARENT = {"SWR": "SRD", "TST": "SWR"}
+DOCUMENTS = [("reqs/SRD", "schemas/srd_requirement.json"),
+             ("reqs/SWR", "schemas/swr_requirement.json"),
+             ("reqs/TST", "schemas/tst_requirement.json")]
+
+
+def link_uids(item: dict) -> list:
+    return [next(iter(link)) if isinstance(link, dict) else str(link) for link in item.get("links") or []]
 
 
 def validate_directory(req_dir: str, schema_path: str) -> bool:
@@ -55,6 +69,10 @@ def validate_directory(req_dir: str, schema_path: str) -> bool:
         except jsonschema.ValidationError as e:
             errors.append(f"  FAIL {path.name}: {e.message}")
             continue
+        parent = REQUIRED_PARENT.get(directory.name)
+        if parent and not any(uid.startswith(parent) for uid in link_uids(item)):
+            errors.append(f"  FAIL {path.name}: must link to at least one {parent} item")
+            continue
         if item["status"] in ("reviewed", "approved"):
             if genuinely_reviewed is None:
                 genuinely_reviewed = reviewed_by_doorstop(directory)
@@ -69,6 +87,12 @@ def validate_directory(req_dir: str, schema_path: str) -> bool:
 
 
 if __name__ == "__main__":
-    req_dir = sys.argv[1] if len(sys.argv) > 1 else "reqs/SRD"
-    schema = sys.argv[2] if len(sys.argv) > 2 else "schemas/srd_requirement.json"
-    sys.exit(0 if validate_directory(req_dir, schema) else 1)
+    if len(sys.argv) == 3:
+        sys.exit(0 if validate_directory(sys.argv[1], sys.argv[2]) else 1)
+    if len(sys.argv) != 1:
+        sys.exit("usage: validate_iso26262.py [REQ_DIR SCHEMA]")
+    results = []
+    for req_dir, schema in DOCUMENTS:
+        print(f"== {req_dir}")
+        results.append(validate_directory(req_dir, schema))
+    sys.exit(0 if all(results) else 1)

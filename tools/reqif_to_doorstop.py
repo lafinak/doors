@@ -8,9 +8,9 @@ cannot be imported is reported on stderr instead of being dropped silently.
 """
 import re
 import sys
-from html import unescape
 
 import doorstop
+from lxml import html as lxml_html
 from reqif.models.reqif_spec_object_type import ReqIFSpecObjectType
 from reqif.parser import ReqIFParser
 
@@ -26,11 +26,39 @@ def warn(message: str) -> None:
 
 
 def xhtml_to_text(value: str) -> str:
-    """Strip XHTML markup. Tables/images are lost (documented in the guide)."""
-    value = re.sub(r"<br\s*/?>|</p>|</div>|</li>|</tr>", "\n", value)
-    value = re.sub(r"</td>|</th>", " | ", value)
-    value = re.sub(r"<[^>]+>", "", value)
-    return unescape(re.sub(r"[ \t]+", " ", value)).strip()
+    """Render ReqIF XHTML as Markdown-ish plain text (Doorstop renders Markdown).
+
+    Lists become "- " bullets, tables become pipe tables, line breaks are kept.
+    Images/objects cannot be carried over, so they become a visible
+    "[image: <name>]" marker rather than vanishing.
+    """
+    if not value or not value.strip():
+        return ""
+    root = lxml_html.fragment_fromstring(value, create_parent="div")
+
+    def render(node) -> str:
+        tag = node.tag if isinstance(node.tag, str) else ""
+        if tag in ("img", "object"):
+            return f"[image: {node.get('src') or node.get('data') or node.get('alt') or 'unnamed'}]"
+        if tag == "br":
+            return "\n"
+        if tag == "table":
+            rows = [[render(cell).strip().replace("\n", " ") for cell in row.iter("td", "th")] for row in node.iter("tr")]
+            if not rows:
+                return ""
+            lines = ["| " + " | ".join(row) + " |" for row in rows]
+            lines.insert(1, "|" + "---|" * len(rows[0]))
+            return "\n\n" + "\n".join(lines) + "\n\n"
+        inner = (node.text or "") + "".join(render(child) + (child.tail or "") for child in node)
+        if tag == "li":
+            return "\n- " + inner.strip()
+        if tag in ("p", "div", "ul", "ol", "h1", "h2", "h3", "h4", "h5", "h6"):
+            return "\n" + inner + "\n"
+        return inner
+
+    text = render(root).replace("\xa0", " ")
+    text = re.sub(r"[ \t]+", " ", text)
+    return re.sub(r"\n{3,}", "\n\n", text).strip()
 
 
 def attribute_names(bundle) -> dict:

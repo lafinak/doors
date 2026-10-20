@@ -156,3 +156,72 @@ def test_dolt_sync_rolls_back_on_failure(repo):
     assert run(sync, repo).returncode != 0
     count = run("dolt sql -r csv -q 'SELECT COUNT(*) FROM requirements'", repo / "dolt_reqs", shell=True).stdout.split()[-1]
     assert count == "2"
+
+
+# ---- SWR / TST validation and CLAUDE.md link rules
+def put_doc(repo, prefix, uid, **over):
+    base = {**GOOD, "text": "The system shall verify things properly.\n"}
+    for key in ("asil", "verification_method", "rationale"):
+        base.pop(key)
+    (repo / "reqs" / prefix).mkdir(parents=True, exist_ok=True)
+    (repo / "reqs" / prefix / f"{uid}.yml").write_text(yaml.safe_dump({**base, **over}), encoding="utf-8")
+
+
+def iso_doc(repo, prefix):
+    schema = ROOT / "schemas" / f"{prefix.lower()}_requirement.json"
+    return run([sys.executable, "-I", str(ROOT / "scripts/validate_iso26262.py"), f"reqs/{prefix}", str(schema)], repo)
+
+
+def test_swr_must_link_to_an_srd(repo):
+    put_doc(repo, "SWR", "SWR001", links=[])
+    assert iso_doc(repo, "SWR").returncode == 1
+    put_doc(repo, "SWR", "SWR001", links=[{"TST001": None}])  # wrong kind of parent
+    assert iso_doc(repo, "SWR").returncode == 1
+    put_doc(repo, "SWR", "SWR001", links=[{"SRD001": None}])
+    assert iso_doc(repo, "SWR").returncode == 0
+
+
+def test_tst_must_link_to_a_swr(repo):
+    put_doc(repo, "TST", "TST001", text="Verify the thing works.\n", links=[{"SRD001": None}])
+    assert iso_doc(repo, "TST").returncode == 1
+    put_doc(repo, "TST", "TST001", text="Verify the thing works.\n", links=[{"SWR001": None}])
+    assert iso_doc(repo, "TST").returncode == 0
+
+
+def test_swr_text_must_be_shall_form(repo):
+    put_doc(repo, "SWR", "SWR001", links=[{"SRD001": None}], text="Software handles things somehow.\n")
+    assert iso_doc(repo, "SWR").returncode == 1
+
+
+def test_iso_default_mode_checks_the_whole_repo():
+    r = run([sys.executable, "-I", str(ROOT / "scripts/validate_iso26262.py")], ROOT)
+    assert r.returncode == 0, r.stdout
+    assert "== reqs/SRD" in r.stdout and "== reqs/SWR" in r.stdout and "== reqs/TST" in r.stdout
+
+
+def test_imported_items_get_status_draft_for_any_document(repo):
+    convert(repo, SAMPLE)
+    assert all(i["status"] == "draft" for i in items(repo).values())
+
+
+# ---- rich text conversion
+sys.path.insert(0, str(ROOT / "tools"))
+from reqif_to_doorstop import xhtml_to_text  # noqa: E402
+
+
+def test_xhtml_lists_become_bullets():
+    assert xhtml_to_text("<div><p>The system shall list:</p><ul><li>one</li><li>two &amp; three</li></ul></div>") == "The system shall list:\n\n- one\n- two & three"
+
+
+def test_xhtml_tables_become_pipe_tables():
+    text = xhtml_to_text("<div>Intro<table><tr><th>A</th><th>B</th></tr><tr><td>1</td><td>2</td></tr></table>After</div>")
+    assert "| A | B |\n|---|---|\n| 1 | 2 |" in text and text.startswith("Intro") and text.endswith("After")
+
+
+def test_xhtml_images_leave_a_visible_marker():
+    assert xhtml_to_text("<div>See <object data='fig1.png'/> here</div>") == "See [image: fig1.png] here"
+
+
+@pytest.mark.parametrize("raw,expected", [("", ""), ("   ", ""), ("<div>a&nbsp;b</div>", "a b"), ("<div>l1<br/>l2</div>", "l1\nl2")])
+def test_xhtml_edge_cases(raw, expected):
+    assert xhtml_to_text(raw) == expected

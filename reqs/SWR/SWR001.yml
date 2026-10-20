@@ -8,5 +8,6 @@ links:
 normative: true
 ref: ''
 reviewed: null
+status: draft
 text: |
   The system shall verify user credentials against the credential store using a salted hash.

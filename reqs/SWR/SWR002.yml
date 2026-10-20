@@ -9,5 +9,6 @@ links:
 normative: true
 ref: ''
 reviewed: null
+status: draft
 text: |
   The system shall maintain a failed-attempt counter per account and reset it on successful login.
