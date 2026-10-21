@@ -4,3 +4,4 @@ __pycache__/
 dolt_reqs/
 .dolt/
 .pytest_cache/
+.venv/

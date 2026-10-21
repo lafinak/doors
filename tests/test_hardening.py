@@ -77,6 +77,25 @@ def test_iso_accepts_genuine_review(repo):
     assert iso(repo).returncode == 1  # stale stamp
 
 
+def test_iso_accepts_a_correctly_computed_stamp_without_doorstop_review(repo):
+    """Known limitation (README "Known limits"): the review stamp is
+    sha256(uid, text, ref, links, ...) -- a content hash, not a signature tied to
+    a human. Anyone who can `import doorstop` can compute the exact value
+    `doorstop review` would write, without ever running it or being a human.
+    validate_iso26262.py has no way to tell the two apart; only human PR review
+    enforced by branch protection (outside this repo) catches this.
+    This test pins today's actual (permissive) behavior so a future change to the
+    stamp check is a visible diff here, not a silent regression either direction."""
+    import doorstop
+
+    put(repo, "SRD001")
+    tree = doorstop.build(root=str(repo))
+    tree.load()
+    forged = tree.find_document("SRD").find_item("SRD001").stamp(links=True).value
+    put(repo, "SRD001", status="approved", reviewed=forged)  # never ran `doorstop review`
+    assert iso(repo).returncode == 0  # accepted anyway -- see docstring
+
+
 def test_iso_empty_or_missing_directory_fails(repo):
     assert iso(repo).returncode == 1
     assert iso(repo, "nope").returncode == 1
