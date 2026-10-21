@@ -30,7 +30,10 @@ def keys(tmp_path_factory):
     gnupghome = tmp_path_factory.mktemp("gnupg")
     gnupghome.chmod(0o700)
     import os
-    env = {**os.environ, "GNUPGHOME": str(gnupghome)}
+    # GIT_CONFIG_GLOBAL/NOSYSTEM: ignore the developer's own git config. A global
+    # `gpg.format=ssh` / `commit.gpgsign=true` would otherwise SSH-sign the "unsigned"
+    # commits and stop `-S` from using these throwaway GPG keys.
+    env = {**os.environ, "GNUPGHOME": str(gnupghome), "GIT_CONFIG_GLOBAL": "/dev/null", "GIT_CONFIG_NOSYSTEM": "1"}
 
     fingerprints = {}
     for name, email in [("alice", "alice@example.com"), ("mallory", "mallory@example.com")]:
@@ -157,3 +160,31 @@ def test_draft_items_need_no_signature(repo, keys):
     r = verify(repo, keys["env"])
     assert r.returncode == 0
     assert "OK: SRD001.yml" in r.stdout
+
+
+def test_unsigned_status_flip_after_a_signed_review_is_rejected(repo, keys):
+    """Alice signs the review while the item is still a draft; an unsigned commit then
+    flips status to approved. The `reviewed:` line is still alice's, so checking only that
+    line would pass -- the `status:` line must be attributable to a trusted signer too."""
+    stamp = forged_stamp(repo, GOOD_SRD)
+    item_file = repo / "reqs" / "SRD" / "SRD001.yml"
+    item_file.write_text(yaml.safe_dump({**GOOD_SRD, "status": "draft", "reviewed": stamp}))
+    assert commit_as(repo, "alice", keys, "alice reviews (still draft)").returncode == 0
+    assert verify(repo, keys["env"]).returncode == 0  # a draft needs no sign-off
+
+    item_file.write_text(yaml.safe_dump({**GOOD_SRD, "status": "approved", "reviewed": stamp}))
+    assert commit_unsigned(repo, keys, "agent flips status").returncode == 0
+    r = verify(repo, keys["env"])
+    assert r.returncode == 1, r.stdout
+    assert "status" in r.stdout
+
+
+def test_signed_status_flip_by_the_trusted_reviewer_is_accepted(repo, keys):
+    stamp = forged_stamp(repo, GOOD_SRD)
+    item_file = repo / "reqs" / "SRD" / "SRD001.yml"
+    item_file.write_text(yaml.safe_dump({**GOOD_SRD, "status": "draft", "reviewed": stamp}))
+    assert commit_as(repo, "alice", keys, "alice reviews").returncode == 0
+    item_file.write_text(yaml.safe_dump({**GOOD_SRD, "status": "approved", "reviewed": stamp}))
+    assert commit_as(repo, "alice", keys, "alice approves").returncode == 0
+    r = verify(repo, keys["env"])
+    assert r.returncode == 0, r.stdout + r.stderr

@@ -42,7 +42,7 @@ The importer is safe to re-run: every imported item keeps its ReqIF identifier i
 - Every SWR links to an SRD, every TST to a SWR
 - No link cycles or self-links
 - `status: reviewed|approved` only when Doorstop confirms the review stamp matches the item's current content (a hand-written or stale stamp fails)
-- `status: reviewed|approved` additionally only when `scripts/verify_review_signoff.py` finds, via `git blame`, that the commit which introduced the item's current `reviewed:` line carries a GPG signature from a fingerprint listed in `reviewers.yml` for a CODEOWNERS path owner -- this is the part that specifically can't be forged by computing the content hash yourself, since it needs a private key you don't hold (see "Known limits" for what it still doesn't prove)
+- `status: reviewed|approved` additionally only when `scripts/verify_review_signoff.py` finds, via `git blame`, that the commits which introduced the item's current `reviewed:` **and** `status:` lines both carry a GPG signature from a fingerprint listed in `reviewers.yml` for a CODEOWNERS path owner -- this is the part that specifically can't be forged by computing the content hash yourself, since it needs a private key you don't hold (see "Known limits" for what it still doesn't prove)
 - Nothing in the tooling approves anything: `tools/validate.py` never writes files
 
 ## Differences from the guide
@@ -65,6 +65,7 @@ These were found by actually running it:
 ## Known limits
 
 - A valid review stamp shows the content has not changed since `doorstop review` was run, not that a human ran it -- `scripts/verify_review_signoff.py` closes most of this gap by requiring a GPG signature from a trusted key, which can't be produced just by knowing the (public, secret-free) hash algorithm. It still doesn't prove a human, specifically, typed the review: a reviewer who lets an agent run with their signing key configured (`git config commit.gpgsign true` in an environment the agent controls) has handed that guarantee away. Branch protection with required human PR approval is the backstop for that case, because merging still needs a GitHub-side click the signing key alone doesn't grant.
+- Merge PRs that change reviewed/approved items with **"Create a merge commit"**, not squash or rebase: GitHub rewrites those into new commits, so the reviewer's original signature is lost and `scripts/verify_review_signoff.py` fails closed on `main`.
 - Images and nested tables in DOORS rich text are flattened on import (images become `[image: name]` markers, hyperlinks become `[text](href)`, merged header cells are padded so column counts stay consistent); check imported items against DOORS.
 - A SPEC-RELATION's type (e.g. "Satisfies" vs. "Verifies") is not preserved: Doorstop links carry no type field, so distinct link kinds are all flattened to one plain parent/child link. The importer warns on stderr when the source distinguishes more than one type, but does not invent a schema field to hold it -- revisit if a client's review process depends on that distinction.
 - Import speed is about 40 ms per requirement.
