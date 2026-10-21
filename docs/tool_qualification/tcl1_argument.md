@@ -32,8 +32,8 @@ confidence that a tool malfunction or erroneous output will be prevented or dete
 | `reviewed`/`approved` status only with a review stamp that matches the item's current content | `scripts/validate_iso26262.py` (forged or stale stamps rejected) | Yes (deterministic), but the stamp itself is a public content hash a non-human can reproduce -- see the limits below and the next row |
 | `reviewed`/`approved` status additionally requires the commit that set the stamp to carry a GPG signature from a fingerprint a human configured in `reviewers.yml` for that path's code owner | `scripts/verify_review_signoff.py` in CI, via `git blame` | Yes (deterministic check; the trust set is a human-maintained file, not inferred) |
 | Regression tests for the tooling itself (about 41 cases, incl. hostile input, forged stamps, and forged-vs-genuine signatures with real ephemeral GPG keys) | `tests/` in CI | Yes (deterministic) |
-| Code-owner review for `reqs/`, `schemas/`, `scripts/`, `tools/`, `.github/` | `.github/CODEOWNERS` (**takes effect only when branch protection requires code-owner review; not set by this repo**) | Yes (human) |
-| Required approvals to merge to `main` | Branch protection (**must be enabled; not set by this repo**) | Yes |
+| Code-owner review for `reqs/`, `schemas/`, `scripts/`, `tools/`, `.github/` | `.github/CODEOWNERS`, enforced via branch protection on the default branch (`claude/fervent-johnson-ruaj13`), **enabled 2026-10-21** | Yes (human) |
+| Required approvals to merge | Branch protection, `required_approving_review_count: 1`, **enabled 2026-10-21**; `enforce_admins: false` so the repo admin can still bypass solo -- **this bypass means a human with admin rights can still merge their own unreviewed change**, it is not closed, only a second reviewer or `enforce_admins: true` closes it | Yes, with the stated gap |
 
 **Proposed TD: TD1** (written "TED1" in some project notes; the standard's term is TD), resting mainly on the human review: an engineer reviews every diff before it is merged. An assessor must decide whether
 this is sufficient for the ASILs in scope, particularly ASIL C/D.
@@ -65,7 +65,7 @@ Limits, stated plainly:
 
 - [ ] Sample of at least 10 Claude-drafted requirements with the human review log
 - [ ] CI run logs (GitHub Actions) showing both validators passing
-- [ ] Branch protection settings screenshot (two approvals on `main`)
+- [ ] Branch protection settings screenshot (1 required approval + code-owner review, `enforce_admins: false`, default branch `claude/fervent-johnson-ruaj13` -- live since 2026-10-21, screenshot not yet captured)
 - [ ] Reviewers' GPG public keys committed under `keys/`, fingerprints recorded in `reviewers.yml`, and at least one CI run showing `verify_review_signoff.py` passing against a genuinely signed review
 - [ ] Record of the model/version used per drafting session
 - [ ] Assessor sign-off on the TI/TD/TCL classification

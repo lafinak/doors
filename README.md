@@ -59,7 +59,7 @@ These were found by actually running it:
 ## Setup needed on GitHub
 
 - Settings → Pages → Source: **GitHub Actions**, and add `main` under Settings → Environments → `github-pages` → Deployment branches
-- Branch protection on `main`: required approvals **and "Require review from Code Owners"** (see `.github/CODEOWNERS`). A sole maintainer cannot approve their own PR, so add a second reviewer or allow administrator bypass.
+- Branch protection on the default branch (`claude/fervent-johnson-ruaj13`, not `main` -- check `gh repo view --json defaultBranchRef` before assuming): required approvals **and "Require review from Code Owners"** (see `.github/CODEOWNERS`). **Enabled 2026-10-21** with `enforce_admins: false` (repo admins can bypass, so the sole-maintainer trap doesn't block solo work) and `required_approving_review_count: 1`. Revisit `enforce_admins` once a second reviewer exists -- the bypass is a deliberate, known gap, not an oversight.
 - GPG sign-off: each reviewer runs `gpg --gen-key` (or reuses an existing key), exports the public key with `gpg --export --armor <key-id> > keys/<name>.asc` and commits it, then adds the *signing subkey* fingerprint (the one `git log --format=%GF` reports for a signed commit of theirs, not necessarily the primary key fingerprint) to `reviewers.yml` under their CODEOWNERS username. Reviewers then commit with `git commit -S` (or `git config commit.gpgsign true`) when flipping an item's `status` to `reviewed`/`approved`. Until a reviewer has a fingerprint in `reviewers.yml`, every reviewed/approved item under their path fails closed in CI.
 
 ## Known limits
