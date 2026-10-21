@@ -173,6 +173,72 @@ def test_convert_warns_about_dropped_attributes(repo):
     assert "priority" not in items(repo)["SRD001"]
 
 
+def test_convert_table_colspan_does_not_lose_cells(repo):
+    """A merged header cell (colspan) must not desync column counts between
+    rows -- that previously produced a malformed Markdown table whose data
+    cell silently vanished from the published HTML (found by stress-testing
+    with a synthetic export using a real DOORS-style merged-header table)."""
+    xml = SAMPLE.replace(
+        "The system shall authenticate users before granting access to any protected resource.",
+        'The system shall authenticate users before granting access to any protected resource.'
+        '<xhtml:table><xhtml:tr><xhtml:td colspan="2">Header</xhtml:td></xhtml:tr>'
+        '<xhtml:tr><xhtml:td>A</xhtml:td><xhtml:td>B</xhtml:td></xhtml:tr></xhtml:table>',
+        1,
+    )
+    assert convert(repo, xml).returncode == 0
+    text = items(repo)["SRD001"]["text"]
+    lines = [l for l in text.splitlines() if l.strip().startswith("|")]
+    widths = {line.count("|") for line in lines}
+    assert len(widths) == 1, f"ragged table columns: {lines}"
+    assert "B" in text  # the cell that used to vanish
+
+
+def test_convert_preserves_hyperlinks(repo):
+    """<a href> text must keep its target, not just its visible text --
+    previously identical to plain text, unlike <img>/<object> which already
+    got a `[image: ...]` marker."""
+    xml = SAMPLE.replace(
+        "The system shall authenticate users before granting access to any protected resource.",
+        'The system shall authenticate users before granting access to any protected resource.'
+        ' See <xhtml:a href="https://example.com/spec">the external spec</xhtml:a>.',
+        1,
+    )
+    assert convert(repo, xml).returncode == 0
+    text = items(repo)["SRD001"]["text"]
+    assert "[the external spec](https://example.com/spec)" in text
+
+
+def test_convert_warns_about_mixed_link_types(repo):
+    """Doorstop links carry no type; if the source distinguishes link kinds
+    (e.g. Satisfies vs. Verifies), that must be visible on stderr rather than
+    silently flattened to one undifferentiated kind of link."""
+    xml = SAMPLE.replace(
+        '<SPEC-RELATION-TYPE IDENTIFIER="srt-link" LONG-NAME="Link" LAST-CHANGE="2026-10-20T10:00:00Z"/>',
+        '<SPEC-RELATION-TYPE IDENTIFIER="srt-link" LONG-NAME="Link" LAST-CHANGE="2026-10-20T10:00:00Z"/>'
+        '<SPEC-RELATION-TYPE IDENTIFIER="srt-verifies" LONG-NAME="Verifies" LAST-CHANGE="2026-10-20T10:00:00Z"/>',
+    ).replace("<SPEC-RELATION-TYPE-REF>srt-link</SPEC-RELATION-TYPE-REF>",
+              "<SPEC-RELATION-TYPE-REF>srt-verifies</SPEC-RELATION-TYPE-REF>", 1)
+    r = convert(repo, xml)
+    assert r.returncode == 0
+    assert "Link" in r.stderr and "Verifies" in r.stderr and "no type" in r.stderr
+
+
+def test_convert_drops_direct_self_link_with_warning(repo):
+    """A self-referencing SPEC-RELATION in the source file itself (not one
+    created post-import) must be dropped with a warning, not silently kept
+    or silently dropped."""
+    xml = SAMPLE.replace(
+        "</SPEC-RELATIONS>",
+        '<SPEC-RELATION IDENTIFIER="sr-self"><TYPE><SPEC-RELATION-TYPE-REF>srt-link</SPEC-RELATION-TYPE-REF></TYPE>'
+        '<SOURCE><SPEC-OBJECT-REF>so-REQ-1</SPEC-OBJECT-REF></SOURCE>'
+        '<TARGET><SPEC-OBJECT-REF>so-REQ-1</SPEC-OBJECT-REF></TARGET></SPEC-RELATION></SPEC-RELATIONS>',
+    )
+    r = convert(repo, xml)
+    assert r.returncode == 0
+    assert "self-link" in r.stderr
+    assert "SRD001" not in (items(repo)["SRD001"].get("links") or [])
+
+
 def test_convert_non_numeric_foreign_id_does_not_crash(repo):
     xml = SAMPLE.replace('<ATTRIBUTE-VALUE-INTEGER THE-VALUE="1"', '<ATTRIBUTE-VALUE-INTEGER THE-VALUE="abc"', 1)
     assert convert(repo, xml).returncode == 0

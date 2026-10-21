@@ -65,7 +65,8 @@ These were found by actually running it:
 ## Known limits
 
 - A valid review stamp shows the content has not changed since `doorstop review` was run, not that a human ran it -- `scripts/verify_review_signoff.py` closes most of this gap by requiring a GPG signature from a trusted key, which can't be produced just by knowing the (public, secret-free) hash algorithm. It still doesn't prove a human, specifically, typed the review: a reviewer who lets an agent run with their signing key configured (`git config commit.gpgsign true` in an environment the agent controls) has handed that guarantee away. Branch protection with required human PR approval is the backstop for that case, because merging still needs a GitHub-side click the signing key alone doesn't grant.
-- Images and nested tables in DOORS rich text are flattened on import (images become `[image: name]` markers); check imported items against DOORS.
+- Images and nested tables in DOORS rich text are flattened on import (images become `[image: name]` markers, hyperlinks become `[text](href)`, merged header cells are padded so column counts stay consistent); check imported items against DOORS.
+- A SPEC-RELATION's type (e.g. "Satisfies" vs. "Verifies") is not preserved: Doorstop links carry no type field, so distinct link kinds are all flattened to one plain parent/child link. The importer warns on stderr when the source distinguishes more than one type, but does not invent a schema field to hold it -- revisit if a client's review process depends on that distinction.
 - Import speed is about 40 ms per requirement.
 
 ## Status

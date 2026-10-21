@@ -12,6 +12,7 @@ import sys
 import doorstop
 from lxml import html as lxml_html
 from reqif.models.reqif_spec_object_type import ReqIFSpecObjectType
+from reqif.models.reqif_spec_relation_type import ReqIFSpecRelationType
 from reqif.parser import ReqIFParser
 
 TEXT_ATTR = "ReqIF.Text"
@@ -43,12 +44,25 @@ def xhtml_to_text(value: str) -> str:
         if tag == "br":
             return "\n"
         if tag == "table":
-            rows = [[render(cell).strip().replace("\n", " ") for cell in row.iter("td", "th")] for row in node.iter("tr")]
+            def cells(row):
+                out = []
+                for cell in row.iter("td", "th"):
+                    span = max(1, parse_number(cell.get("colspan"), 1))
+                    out.extend([render(cell).strip().replace("\n", " ")] + [""] * (span - 1))
+                return out
+
+            rows = [cells(row) for row in node.iter("tr")]
             if not rows:
                 return ""
+            width = max(len(row) for row in rows)
+            rows = [row + [""] * (width - len(row)) for row in rows]  # pad ragged rows too
             lines = ["| " + " | ".join(row) + " |" for row in rows]
-            lines.insert(1, "|" + "---|" * len(rows[0]))
+            lines.insert(1, "|" + "---|" * width)
             return "\n\n" + "\n".join(lines) + "\n\n"
+        if tag == "a":
+            inner = (node.text or "") + "".join(render(child) + (child.tail or "") for child in node)
+            href = node.get("href")
+            return f"[{inner}]({href})" if href else inner
         inner = (node.text or "") + "".join(render(child) + (child.tail or "") for child in node)
         if tag == "li":
             return "\n- " + inner.strip()
@@ -69,6 +83,15 @@ def attribute_names(bundle) -> dict:
             for definition in spec_type.attribute_definitions or []:
                 names[definition.identifier] = definition.long_name
     return names
+
+
+def relation_type_names(bundle) -> dict:
+    """relation type identifier -> long name."""
+    return {
+        spec_type.identifier: spec_type.long_name
+        for spec_type in bundle.core_content.req_if_content.spec_types or []
+        if isinstance(spec_type, ReqIFSpecRelationType)
+    }
 
 
 def parse_number(raw, fallback: int) -> int:
@@ -130,6 +153,8 @@ def convert(reqif_path: str, prefix: str, root: str = ".") -> list:
         created[ref] = item
         imported.append(item)
 
+    rel_type_names = relation_type_names(bundle)
+    seen_rel_types = set()
     for relation in content.spec_relations or []:
         source, target = created.get(relation.source), created.get(relation.target)
         if source is None or target is None:
@@ -138,6 +163,10 @@ def convert(reqif_path: str, prefix: str, root: str = ".") -> list:
             warn(f"link {relation.source} -> {relation.target} dropped: self-link")
         else:
             source.link(target.uid)
+            seen_rel_types.add(rel_type_names.get(relation.relation_type_ref, relation.relation_type_ref))
+    if len(seen_rel_types) > 1:
+        warn(f"source file distinguishes {len(seen_rel_types)} link types ({', '.join(sorted(seen_rel_types))}); "
+             "Doorstop links carry no type, so all became plain parent/child links")
 
     for item in created.values():
         item.save()
