@@ -1,0 +1,16 @@
+# Maps a CODEOWNERS GitHub username to the GPG key(s) they review with.
+#
+# scripts/verify_review_signoff.py trusts a `status: reviewed`/`approved` item
+# only if the git commit that introduced its current `reviewed:` stamp line
+# (found via `git blame`) carries a valid signature from one of the
+# fingerprints listed for a username that owns that item's path in
+# .github/CODEOWNERS.
+#
+# Add your own fingerprint with: gpg --fingerprint <your-key-id>
+# (git reports the *signing* (sub)key fingerprint in `git log --format=%GF`,
+# which for a default `gpg --gen-key` is not the primary key fingerprint --
+# sign a test commit and check `git log -1 --format=%GF` if unsure which one
+# to paste here.)
+reviewers:
+  - codeowner: lafinak
+    gpg_fingerprints: []

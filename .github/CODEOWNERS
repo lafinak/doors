@@ -1,0 +1,11 @@
+# Requirements, and the tooling that validates them, need the owner's review.
+# Turn on "Require review from Code Owners" in branch protection for this to
+# block merges: it is what stops an AI-drafted change from being approved
+# without a human (the TCL1 argument in docs/tool_qualification relies on it).
+/reqs/        @lafinak
+/schemas/     @lafinak
+/scripts/     @lafinak
+/tools/       @lafinak
+/tests/       @lafinak
+/.github/     @lafinak
+/CLAUDE.md    @lafinak

@@ -3,3 +3,5 @@ __pycache__/
 *.pyc
 dolt_reqs/
 .dolt/
+.pytest_cache/
+.venv/
