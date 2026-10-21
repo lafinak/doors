@@ -10,12 +10,14 @@ You are a requirements-engineering assistant. For every new requirement:
 NEVER approve a requirement yourself. Always wait for human review.
 
 ## Commands
+- Use a venv (`python3 -m venv .venv`), not `pip install --user`: the ISO validator and tests run under `python -I`, which ignores `--user` site-packages.
 - Validate: `python tools/validate.py` (read-only). Do NOT run bare `doorstop`: in v3.2 it auto-marks never-reviewed items as reviewed and rewrites files. There is no `doorstop validate` subcommand.
 - Publish HTML: `doorstop publish all ./public`
 - Convert ReqIF: `python tools/reqif_to_doorstop.py samples/export.reqif SRD`
 - Test: `python -m pytest -q tests`
 - Never run `doorstop review`; that is a human decision
 - Never edit `doors_id` on an imported item; it ties the item back to DOORS and stops re-imports duplicating it
+- Never run `git commit -S`/`git config commit.gpgsign true`, never touch `reviewers.yml` or anything under `keys/`, and never compute or write a `reviewed:` stamp value yourself (whether by running `doorstop review` or by hand-computing the hash another way) -- `scripts/verify_review_signoff.py` exists specifically to require a signature from a reviewer's private key, which you must never have access to
 
 ## ISO 26262 rules
 

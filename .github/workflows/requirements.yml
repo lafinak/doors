@@ -15,6 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # verify_review_signoff.py uses `git blame`, which needs real history
 
       - uses: actions/setup-python@v5
         with:
@@ -32,6 +34,14 @@ jobs:
 
       - name: ISO 26262 schema validation
         run: python -I scripts/validate_iso26262.py
+
+      - name: Import trusted reviewer GPG keys
+        run: |
+          shopt -s nullglob
+          for f in keys/*.asc; do gpg --import "$f"; done
+
+      - name: Verify review sign-off (GPG, catches a forged stamp)
+        run: python scripts/verify_review_signoff.py
 
       - name: ReqIF converter smoke test
         run: |

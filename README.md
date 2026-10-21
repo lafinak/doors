@@ -10,15 +10,24 @@ Migration path from IBM DOORS to Git-native requirements management with [Doorst
 | 2 | ReqIF (DOORS export) → Doorstop converter and a synthetic export | `tools/reqif_to_doorstop.py`, `tools/make_dummy_reqif.py`, `samples/export.reqif` |
 | 3 | CI: validate and test on every PR, publish HTML report to GitHub Pages | `.github/workflows/requirements.yml` |
 | 4 | ISO 26262 schemas, validator, TCL1 dossier (draft) | `schemas/`, `scripts/validate_iso26262.py`, `docs/tool_qualification/` |
-| + | Regression tests (hostile input, forged approvals, scale) | `tests/` |
+| 5 | GPG sign-off: a reviewed/approved item must be attributable to a commit signed by a trusted human, not just a correct content hash | `reviewers.yml`, `keys/`, `scripts/verify_review_signoff.py` |
+| + | Regression tests (hostile input, forged approvals, forged signatures, scale) | `tests/` |
 | + | Optional Dolt (SQL) mirror of the YAML | `tools/dolt_schema.sql`, `tools/sync_to_dolt.py` |
 
 ## Quick start
 
+Use a venv, not `pip install --user`: the test suite and CI run `scripts/validate_iso26262.py`
+under `python -I` (isolated mode, as a hardening measure -- see "What the checks enforce").
+`-I` excludes `--user` site-packages, so a `--user` install makes `import doorstop` fail only
+inside tests/CI while looking fine when you run the scripts directly, which is a confusing way
+to debug.
+
 ```bash
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 python tools/validate.py                  # structural validation (read-only)
 python scripts/validate_iso26262.py       # schema + traceability rules for SRD, SWR, TST
+python scripts/verify_review_signoff.py   # GPG sign-off: who actually reviewed it (needs git history + reviewers.yml)
 python -m pytest -q tests                 # regression tests
 doorstop publish all ./public             # HTML report with traceability matrix
 python tools/make_dummy_reqif.py          # regenerate the synthetic DOORS export
@@ -33,6 +42,7 @@ The importer is safe to re-run: every imported item keeps its ReqIF identifier i
 - Every SWR links to an SRD, every TST to a SWR
 - No link cycles or self-links
 - `status: reviewed|approved` only when Doorstop confirms the review stamp matches the item's current content (a hand-written or stale stamp fails)
+- `status: reviewed|approved` additionally only when `scripts/verify_review_signoff.py` finds, via `git blame`, that the commit which introduced the item's current `reviewed:` line carries a GPG signature from a fingerprint listed in `reviewers.yml` for a CODEOWNERS path owner -- this is the part that specifically can't be forged by computing the content hash yourself, since it needs a private key you don't hold (see "Known limits" for what it still doesn't prove)
 - Nothing in the tooling approves anything: `tools/validate.py` never writes files
 
 ## Differences from the guide
@@ -50,10 +60,11 @@ These were found by actually running it:
 
 - Settings → Pages → Source: **GitHub Actions**, and add `main` under Settings → Environments → `github-pages` → Deployment branches
 - Branch protection on `main`: required approvals **and "Require review from Code Owners"** (see `.github/CODEOWNERS`). A sole maintainer cannot approve their own PR, so add a second reviewer or allow administrator bypass.
+- GPG sign-off: each reviewer runs `gpg --gen-key` (or reuses an existing key), exports the public key with `gpg --export --armor <key-id> > keys/<name>.asc` and commits it, then adds the *signing subkey* fingerprint (the one `git log --format=%GF` reports for a signed commit of theirs, not necessarily the primary key fingerprint) to `reviewers.yml` under their CODEOWNERS username. Reviewers then commit with `git commit -S` (or `git config commit.gpgsign true`) when flipping an item's `status` to `reviewed`/`approved`. Until a reviewer has a fingerprint in `reviewers.yml`, every reviewed/approved item under their path fails closed in CI.
 
 ## Known limits
 
-- A valid review stamp shows the content has not changed since `doorstop review` was run, not that a human ran it. Branch protection with required reviewers is what makes review a human decision.
+- A valid review stamp shows the content has not changed since `doorstop review` was run, not that a human ran it -- `scripts/verify_review_signoff.py` closes most of this gap by requiring a GPG signature from a trusted key, which can't be produced just by knowing the (public, secret-free) hash algorithm. It still doesn't prove a human, specifically, typed the review: a reviewer who lets an agent run with their signing key configured (`git config commit.gpgsign true` in an environment the agent controls) has handed that guarantee away. Branch protection with required human PR approval is the backstop for that case, because merging still needs a GitHub-side click the signing key alone doesn't grant.
 - Images and nested tables in DOORS rich text are flattened on import (images become `[image: name]` markers); check imported items against DOORS.
 - Import speed is about 40 ms per requirement.
 
