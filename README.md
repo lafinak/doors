@@ -34,7 +34,7 @@ python tools/make_dummy_reqif.py          # regenerate the synthetic DOORS expor
 python tools/reqif_to_doorstop.py samples/export.reqif SRD   # import into an SRD document
 ```
 
-The importer is safe to re-run: every imported item keeps its ReqIF identifier in `doors_id`, items already imported are skipped (never overwritten), and anything it cannot carry over (dangling links, unknown objects) is reported on stderr. Imported items are always `status: draft` and unreviewed, and the ISO validator flags them until an engineer adds `rationale` and `verification_method`.
+The importer is safe to re-run: every imported item keeps its ReqIF identifier in `doors_id`, items already imported are skipped (never overwritten), and anything it cannot carry over (dangling links, unknown objects, or a source attribute not listed in `EXTRA_ATTRS`) is reported on stderr. Imported items are always `status: draft` and unreviewed, and the ISO validator flags them until an engineer adds `rationale` and `verification_method`.
 
 ## What the checks enforce
 

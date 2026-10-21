@@ -151,6 +151,28 @@ def test_convert_warns_about_dropped_links(repo):
     assert r.returncode == 0 and "ghost" in r.stderr
 
 
+def test_convert_warns_about_dropped_attributes(repo):
+    """An attribute not listed in EXTRA_ATTRS must be reported on stderr, not
+    silently dropped -- matches the module docstring's "reported on stderr
+    instead of being dropped silently" promise, which previously only held
+    for links, not for arbitrary unmapped attributes (found by stress-testing
+    with a synthetic export using attribute types outside the base sample:
+    enum, boolean, date)."""
+    xml = SAMPLE.replace(
+        "</SPEC-ATTRIBUTES>",
+        '<ATTRIBUTE-DEFINITION-STRING IDENTIFIER="ad-priority" LONG-NAME="Priority"><TYPE><DATATYPE-DEFINITION-STRING-REF>dt-str</DATATYPE-DEFINITION-STRING-REF></TYPE></ATTRIBUTE-DEFINITION-STRING></SPEC-ATTRIBUTES>',
+        1,
+    ).replace(
+        "</VALUES>",
+        '<ATTRIBUTE-VALUE-STRING THE-VALUE="High"><DEFINITION><ATTRIBUTE-DEFINITION-STRING-REF>ad-priority</ATTRIBUTE-DEFINITION-STRING-REF></DEFINITION></ATTRIBUTE-VALUE-STRING></VALUES>',
+        1,
+    )
+    r = convert(repo, xml)
+    assert r.returncode == 0
+    assert "Priority" in r.stderr and "not carried over" in r.stderr
+    assert "priority" not in items(repo)["SRD001"]
+
+
 def test_convert_non_numeric_foreign_id_does_not_crash(repo):
     xml = SAMPLE.replace('<ATTRIBUTE-VALUE-INTEGER THE-VALUE="1"', '<ATTRIBUTE-VALUE-INTEGER THE-VALUE="abc"', 1)
     assert convert(repo, xml).returncode == 0
